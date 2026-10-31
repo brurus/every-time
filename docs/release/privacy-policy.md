@@ -1,16 +1,20 @@
 # Privacy Policy — Every Time
 
-_Last updated: 2026-10-02_
+_Last updated: 2026-10-31_
 
 Every Time does not collect, transmit, or store your personal data on any server we control. We operate no server and have no accounts.
 
 ## What the app stores
-Your cities, countdowns, events, timers, work log, activity log, naps and nights you log, jet lag trips and settings are kept on your device. They stay there unless you choose to back them up or export them.
+Your cities, countdowns, events, timers, work log, activity and feeling logs, naps and nights you log, jet lag trips, labor details and settings are kept on your device. They stay there unless you choose to back them up or export them.
 
 ## Apple Health
 - Read-only, and only after you tap "Add nights from Health" and allow it. The app never writes to Health.
 - It reads sleep analysis (asleep, in bed, sleep stages) for the last 30 days to show past nights and estimate your typical sleep-cycle length.
 - Health data is used only on your device to show you your sleep. It is never sent anywhere, never used for advertising or marketing, never shared with third parties, and never included in backups or iCloud Drive.
+
+## Labor
+- The due date, plan answers (such as health conditions you tick), hospital name and phone, contractions and events you log in Labor are kept on your device only.
+- They are included in your backups like other app data, and never sent anywhere else. The call button only opens your phone's dialer.
 
 ## Calendar
 - Calendar, only if you allow it: events are read on the device so you can mark one as important, and lunar events you choose are added to your calendar.

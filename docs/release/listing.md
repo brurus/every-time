@@ -51,7 +51,7 @@ Created by automatic signing on device builds. Verify at developer.apple.com →
 
 ## 5. Run on the iPhone
 
-- [ ] `make device` → paired iPhone. Smoke-test: World (add city), Sleep (nap 10 min → alarm rings, "I'm up"), Add nights from Health, What did (Mark), Lunar (add event to Calendar), Countdown, On this day, Settings → iCloud Drive backup, the widget.
+- [ ] `make device` → paired iPhone. Smoke-test: World (add city), Sleep (nap 10 min → alarm rings, "I'm up"), Add nights from Health, Activities (Mark), Lunar (add event to Calendar), Countdown, Labor (time a contraction), On this day, Settings → iCloud Drive backup, the widget.
 
 ## 6. Create the app in App Store Connect
 
@@ -99,7 +99,7 @@ Fallback, Xcode GUI: `make project`, open `EveryTime.xcodeproj` → destination 
 
 - Typical: 24–48 h. Status: Waiting for Review → In Review → Pending Developer Release.
 - Rejection → **Resolution Center**: reply there, or fix, re-run `make release` (new build number is automatic), attach the new build, resubmit.
-- Likely questions: HealthKit use, background audio (see the top section), Wikipedia content.
+- Likely questions: HealthKit use, background audio (see the top section), Labor medical guidance (1.4.1), Wikipedia content.
 
 ### Guideline 2.1 "Information Needed" (new developer accounts)
 
@@ -111,7 +111,7 @@ Recording (the build Apple reviews, on the iPhone, current iOS):
 1. iPhone Settings → Control Center → add **Screen Recording**. Turn on Do Not Disturb.
 2. In the app, More → **Demo mode** on (keeps your real data out; doesn't read Health). Swipe the app away.
 3. Start recording, then launch the app from the Home Screen.
-4. ~2–3 minutes: World (scroll the hour strips, Add City) → Sleep (tonight's plan, start a 10-min nap, show the alarm screen, Cancel nap) → What did (Mark, tag a range) → Lunar (convert a date, Add event) → More → Jet lag planner (open a trip) → Countdown → On this day → Settings (iCloud Drive backup switch, backups list).
+4. ~2–3 minutes: World (scroll the hour strips, Add City) → Sleep (tonight's plan, start a 10-min nap, show the alarm screen, Cancel nap) → Activities (Mark, tag a range) → Lunar (convert a date, Add event) → More → Jet lag planner (open a trip) → Countdown → Labor (open the plan card, the Why note with sources) → On this day → Settings (iCloud Drive backup switch, backups list).
 5. Turn Demo mode off, Sleep → **Add nights from Health** → the Health permission sheet (shows read-only sleep), allow → past nights appear.
 6. Show the Home Screen widget.
 7. Stop. Photos → trim → share the video.
@@ -146,7 +146,7 @@ Ready — eight simulator shots in Demo mode (iPhone 18 Pro, iOS 27, 2026-10-02)
 1. `01-world` — World: 7 cities on the shared hour strip, cursor at now
 2. `02-sleep` — Sleep ring: tonight's bedtime and wake on whole cycles
 3. `03-nap` — Nap alarm: a nap in progress, alarm and cycle-end options
-4. `04-what-did` — What did: today's timeline, tags, history
+4. `04-what-did` — Activities: today's timeline, tags, history
 5. `05-jet-lag` — Jet lag planner: sleep profile and upcoming trips
 6. `06-lunar` — Lunar: today's lunar date, converter, events
 7. `07-countdown` — Countdowns: days as the hero
@@ -225,9 +225,10 @@ SLEEP
 • Coffee cutoff, energy and sleep debt at a glance
 • Works with Apple Health: add past nights and learn your own cycle length from Apple Watch sleep stages (optional, read-only)
 
-WHAT DID
+ACTIVITIES AND FEELING
 • A day log on a drag-through timeline — mark a moment, tag the stretch
 • Today's totals, 7-day averages and your typical bed and wake times
+• Feeling: tap how you feel through the day and see it beside what you did
 
 JET LAG PLANNER
 • Per-trip plan of light, sleep and caffeine timing to shift your body clock before you fly
@@ -244,6 +245,7 @@ COUNTDOWNS AND EVENTS
 TIMERS AND TOOLS
 • Stopwatch, interview, rehearsal and coding-practice timers, full-screen sideways clock
 • Work timer with breaks, daily history and CSV export
+• Labor contraction timer: one big button, reads the pattern against your hospital's when-to-call rule, one tap to call (a timing aid, not a medical device)
 • Unix timestamp, timestamp converter, cron expression parser
 
 WIDGETS
@@ -269,14 +271,14 @@ App Review Notes (also the Guideline 2.1 answers Apple asked to keep here):
 No account or login. The app opens straight into the World clock. For sample data on every screen: More tab → Demo mode (a separate store; real data untouched; it does not read Health).
 
 PURPOSE AND AUDIENCE
-Every Time is a set of time tools for anyone who works across time zones, travels, or wants to sleep and wake at better times: a world clock and meeting planner, a sleep-cycle and nap planner with an alarm, a day log, a jet lag planner, the Chinese lunar calendar, countdowns, timers, and small developer time tools. It replaces several single-purpose apps with one free app that keeps data on the device.
+Time tools for people who work across time zones, travel, or want better sleep: a world clock and meeting planner, a sleep-cycle and nap planner with an alarm, a day log, a jet lag planner, the Chinese lunar calendar, countdowns, a labor contraction timer, timers, and small developer time tools.
 
 HOW TO USE THE MAIN FEATURES (no setup needed)
 - World tab: cities and their hour strips; drag to compare; Add City.
 - Sleep tab: tonight's bed and wake plan; tap a row to set the alarm, or pick a nap length to start a nap. The alarm rings at the end.
-- What did tab: tap Mark (or the timeline) to log a moment; tag the range.
+- Activities tab: tap Mark (or the timeline) to log a moment; tag the range.
 - Lunar tab: today's lunar date, converter, Add event.
-- More tab: every other tool (Jet lag planner, Countdown, Important events, On this day, timers, Unix/cron tools), Demo mode and Settings (iCloud Drive backup, backup list).
+- More tab: every other tool (Jet lag planner, Countdown, Labor, Important events, On this day, timers, Unix/cron tools), Demo mode and Settings (iCloud Drive backup, backup list).
 - Widgets: World clock and Countdown.
 
 HEALTHKIT
@@ -285,9 +287,13 @@ Read-only access to Sleep Analysis, requested only when the user taps "Add night
 ALARMS AND BACKGROUND AUDIO
 The audio background mode exists only for the user-started nap/sleep alarm, an audible alarm feature.
 - iOS 26 and later: the alarm uses AlarmKit; no background audio is used (unless the user declines AlarmKit permission, then the fallback below applies).
-- iOS 18–25 (no AlarmKit): a local notification cannot ring through the silent switch, so while a nap alarm is set the app plays the alarm sound muted in a loop to stay running in the background, then raises the volume at the set time. It starts only when the user starts a nap or sets an alarm, the screen says to leave the app open, and it stops as soon as the alarm is stopped or cancelled. No audio plays at any other time.
+- iOS 18–25 (no AlarmKit): a notification cannot ring through the silent switch, so while a nap alarm is set the app loops the alarm sound muted to stay alive, then raises the volume at the set time. It starts only when the user sets an alarm and stops when it is stopped or cancelled. No audio plays at any other time.
 - A time-sensitive local notification (Time Sensitive entitlement) is scheduled as a backup in case the app is closed.
 To test: Sleep tab → pick a nap length (or tap a wake time) → lock the phone → the alarm rings at the set time → Stop.
+
+LABOR
+More → Labor. A contraction timer that compares the last hour with the care team's "when to call" rule, or a published default (5-1-1, INSPQ). Not a medical device or diagnosis: it says the care team comes first, lists warning signs, and cites sources (NHS, ACOG, WHO, CDC). The call button only opens the dialer with a number the user typed. Data stays on the device.
+To test: More → Labor → "Later" on setup → start and stop a contraction twice.
 
 OTHER PERMISSIONS
 - Calendar: full access to pick an existing event as an "important event"; write-only access to add lunar events the user creates.
@@ -302,7 +308,7 @@ REGIONAL DIFFERENCES
 The app works the same in every region and is in English. The lunar calendar is the Chinese lunar calendar, available to everyone.
 
 REGULATION
-Every Time is a personal planning tool. Sleep and jet lag suggestions are general timing guidance, not medical advice or a medical device, and the app says so. It handles no money, payments or regulated data.
+Every Time is a personal planning tool. Sleep, jet lag and labor suggestions are general timing guidance, not medical advice or a medical device, and the app says so. It handles no money, payments or regulated data.
 
 All data is stored on the device. We operate no server and receive no user data.
 ```
@@ -334,8 +340,8 @@ Age rating questionnaire — every answer:
 | Violence, sexual content, profanity, horror | None |
 | Mature or suggestive themes | None (On this day lists historical events as plain text) |
 | Alcohol, tobacco, drugs | None |
-| Medical or treatment information | None (melatonin timing only, no dose; "not medical advice, ask a doctor or pharmacist") |
-| Health or wellness topics | **Yes** (sleep, naps, caffeine timing) |
+| Medical or treatment information | **Infrequent** (Labor: when-to-call guidance with sources; melatonin timing only, no dose) |
+| Health or wellness topics | **Yes** (sleep, naps, caffeine timing, labor contractions) |
 | Gambling, simulated gambling, contests, loot boxes | None / No |
 | Made for Kids | No |
 
