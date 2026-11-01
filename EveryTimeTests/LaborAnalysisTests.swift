@@ -77,7 +77,8 @@ struct LaborAnalysisTests {
         #expect(a.flags.contains { $0.id == "preterm" })
         #expect(a.advice.tone == .urgent)
         let quiet = analysis(series(every: [900, 900]), settings: settings)
-        #expect(quiet.advice.headline == "Call your care team.")
+        #expect(quiet.advice.headline == "Keep timing.")
+        #expect(quiet.advice.tone == .calm)
     }
 
     @Test func gestationFromDueDate() throws {
@@ -118,9 +119,12 @@ struct LaborAnalysisTests {
     @Test func nhsUrgentFlags() {
         let often = analysis(series(every: Array(repeating: 90, count: 6), length: 45))
         #expect(often.flags.contains { $0.id == "often" })
-        let start = now.addingTimeInterval(-130)
-        let long = analysis([Contraction(start: start)])
-        #expect(long.flags.contains { $0.id == "long" })
+        let running = analysis([Contraction(start: now.addingTimeInterval(-130))])
+        #expect(!running.flags.contains { $0.id == "long" })
+        let once = analysis([Contraction(start: now.addingTimeInterval(-600), end: now.addingTimeInterval(-450))])
+        #expect(!once.flags.contains { $0.id == "long" })
+        let twice = analysis(series(every: [600, 600], length: 150, endingAt: now.addingTimeInterval(-300)))
+        #expect(twice.flags.contains { $0.id == "long" })
     }
 
     @Test func eventFlags() {
@@ -401,12 +405,6 @@ struct LaborAnalysisTests {
             LaborEvent(kind: .pushing, time: now.addingTimeInterval(-30)),
         ]
         #expect(analysis([], events: events).flags.map(\.id) == ["emergency", "waters", "bleeding"])
-    }
-
-    @Test func dialKeepsExtensionsAndDropsOtherDigits() {
-        #expect(LaborView.telURL("+1 (555) 123-4567, 89#")?.absoluteString == "tel:+15551234567,89%23")
-        #expect(LaborView.telURL("١٢٣") == nil)
-        #expect(LaborView.telURL("") == nil)
     }
 
     @Test func skippedSetupIsNotDone() {

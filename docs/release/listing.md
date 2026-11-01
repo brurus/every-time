@@ -245,7 +245,7 @@ COUNTDOWNS AND EVENTS
 TIMERS AND TOOLS
 • Stopwatch, interview, rehearsal and coding-practice timers, full-screen sideways clock
 • Work timer with breaks, daily history and CSV export
-• Labor contraction timer: one big button, reads the pattern against your hospital's when-to-call rule, one tap to call (a timing aid, not a medical device)
+• Labor contraction timer: one big button, reads the pattern against your hospital's when-to-call rule, with your hospital number at hand (a timing aid, not a medical device)
 • Unix timestamp, timestamp converter, cron expression parser
 
 WIDGETS
@@ -292,7 +292,7 @@ The audio background mode exists only for the user-started nap/sleep alarm, an a
 To test: Sleep tab → pick a nap length (or tap a wake time) → lock the phone → the alarm rings at the set time → Stop.
 
 LABOR
-More → Labor. A contraction timer that compares the last hour with the care team's "when to call" rule, or a published default (5-1-1, INSPQ). Not a medical device or diagnosis: it says the care team comes first, lists warning signs, and cites sources (NHS, ACOG, WHO, CDC). The call button only opens the dialer with a number the user typed. Data stays on the device.
+More → Labor. A contraction timer that compares the last hour with the care team's "when to call" rule, or a published default (5-1-1, INSPQ). Not a medical device or diagnosis: it says the care team comes first, lists warning signs, and cites sources (NHS, ACOG, WHO, CDC). It never dials; it only shows the number the user typed. Data stays on the device.
 To test: More → Labor → "Later" on setup → start and stop a contraction twice.
 
 OTHER PERMISSIONS

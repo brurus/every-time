@@ -22,7 +22,6 @@ struct LaborView: View {
     @State private var confirmsBirth = false
     /// A stage tapped to read about; recorded only on "We're here now".
     @State private var previewing: LaborStage?
-    @Environment(\.openURL) private var openURL
 
     private struct Toast: Equatable {
         let text: String
@@ -38,8 +37,7 @@ struct LaborView: View {
             List {
                 Group {
                     ForEach(analysis.flags) { flag in
-                        FlagBanner(flag: flag, phone: flag.isEmergency ? settings.emergency : settings.phone,
-                                   call: { flag.isEmergency ? dial(settings.emergency) : call() }, setNumber: { showsSettings = true })
+                        FlagBanner(flag: flag, phone: flag.isEmergency ? settings.emergency : settings.phone)
                     }
                     if !settings.setupDone {
                         SetupPrompt(skipped: settings.setupSkipped, start: { showsSetup = true }, skip: { settings.setupSkipped = true })
@@ -68,7 +66,7 @@ struct LaborView: View {
                     } else {
                         if contractions.isEmpty { LaborGuide() }
                         if !analysis.episode.isEmpty && analysis.stage < .hospital {
-                            AdviceView(advice: analysis.advice, phone: settings.phone, call: call, setNumber: { showsSettings = true })
+                            AdviceView(advice: analysis.advice, phone: settings.phone)
                         }
                         bigButton(analysis)
                         afterButton(analysis)
@@ -169,15 +167,18 @@ struct LaborView: View {
     @ViewBuilder
     private func afterButton(_ analysis: LaborAnalysis) -> some View {
         if let open = analysis.open {
-            HStack {
-                if analysis.now.timeIntervalSince(open.start) > LaborAnalysis.maxLength {
+            let mistake = Button("Tapped by mistake", role: .destructive) { delete([open.id]) }.buttonStyle(.soft).lineLimit(1)
+            if analysis.now.timeIntervalSince(open.start) > LaborAnalysis.maxLength {
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Forgot to tap?").font(.subheadline).foregroundStyle(.secondary)
-                    Spacer()
-                    Button("End it at 1:00") { stop(open, at: open.start.addingTimeInterval(60)) }.buttonStyle(.soft)
-                } else {
-                    Spacer()
+                    HStack {
+                        Button("End it at 1:00") { stop(open, at: open.start.addingTimeInterval(60)) }.buttonStyle(.soft).lineLimit(1)
+                        Spacer()
+                        mistake
+                    }
                 }
-                Button("Tapped by mistake", role: .destructive) { delete([open.id]) }.buttonStyle(.soft)
+            } else {
+                HStack { Spacer(); mistake }
             }
         } else if let last = analysis.last, let end = last.end {
             VStack(alignment: .leading, spacing: 10) {
@@ -220,7 +221,7 @@ struct LaborView: View {
     }
 
     private func actions(_ analysis: LaborAnalysis) -> some View {
-        HStack(spacing: 10) {
+        VStack(spacing: 10) {
             Button { picksEvent = true } label: {
                 Label("Waters, bleeding, other…", systemImage: "plus.circle").frame(maxWidth: .infinity)
             }
@@ -387,21 +388,6 @@ struct LaborView: View {
     private func clearAll() {
         contractions = []
         events = []
-    }
-
-    private func call() { dial(settings.phone) }
-
-    private func dial(_ number: String) {
-        guard let url = Self.telURL(number) else { showsSettings = true; return }
-        openURL(url)
-    }
-
-    /// ASCII digits plus + * # and "," (pause before an extension); nil when there are no digits.
-    static func telURL(_ number: String) -> URL? {
-        let kept = number.filter { ("0"..."9").contains($0) || "+*#,".contains($0) }
-        guard kept.contains(where: { ("0"..."9").contains($0) }),
-              let encoded = kept.addingPercentEncoding(withAllowedCharacters: CharacterSet(charactersIn: "0123456789+*,")) else { return nil }
-        return URL(string: "tel:\(encoded)")
     }
 }
 

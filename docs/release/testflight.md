@@ -19,7 +19,7 @@ What's in this beta:
 • Jet lag planner
 • Chinese lunar calendar with converter and events
 • Countdowns, important events, "On this day" (from Wikipedia)
-• Labor: contraction timer that reads the pattern against the hospital's "when to call" rule, with a one-tap call button (timing aid only, not a medical device)
+• Labor: contraction timer that reads the pattern against the hospital's "when to call" rule (timing aid only, not a medical device)
 • Stopwatch, interview / rehearsal / LeetCode / work timers, Unix timestamp and cron tools
 • Widgets: world clock and next countdown
 ```
@@ -44,7 +44,7 @@ Review Notes (Beta App Review Information):
 ```
 No account or login. For sample data on every screen: More tab → Demo mode. HealthKit is read-only Sleep Analysis, requested only from Sleep → "Add nights from Health". Background audio is used solely so the nap alarm can ring at the set time while the phone is locked (iOS 18-25; iOS 26+ uses AlarmKit).
 
-Labor (More tab → Labor) is a contraction timer, not a medical device and not a diagnosis. It times contractions and compares them with the "when to call" rule the user's care team gave, or a published default (5-1-1; INSPQ/NHS/ACOG). Its "Why" note says the care team's advice comes first, lists warning signs to call about at any time, and cites its sources (Cleveland Clinic, NHS, ACOG, WHO, CDC). It never contacts anyone by itself: the call button opens the phone dialer with the number the user typed. All labor data stays on the device.
+Labor (More tab → Labor) is a contraction timer, not a medical device and not a diagnosis. It times contractions and compares them with the "when to call" rule the user's care team gave, or a published default (5-1-1; INSPQ/NHS/ACOG). Its "Why" note says the care team's advice comes first, lists warning signs to call about at any time, and cites its sources (Cleveland Clinic, NHS, ACOG, WHO, CDC). It never calls or contacts anyone; it only shows the hospital number the user typed as text. All labor data stays on the device.
 ```
 
 ## Per build: What to Test

@@ -14,7 +14,7 @@ Your cities, countdowns, events, timers, work log, activity and feeling logs, na
 
 ## Labor
 - The due date, plan answers (such as health conditions you tick), hospital name and phone, contractions and events you log in Labor are kept on your device only.
-- They are included in your backups like other app data, and never sent anywhere else. The call button only opens your phone's dialer.
+- They are included in your backups like other app data, and never sent anywhere else.
 
 ## Calendar
 - Calendar, only if you allow it: events are read on the device so you can mark one as important, and lunar events you choose are added to your calendar.

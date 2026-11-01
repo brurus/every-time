@@ -338,8 +338,8 @@ struct LaborAnalysis {
         }
         let read = pattern
         if isPreterm {
-            return Advice(headline: "Call your care team.",
-                          detail: "Before 37 weeks, any sign of labor is worth a call — don't wait for a pattern.", tone: .go)
+            return Advice(headline: "Keep timing.",
+                          detail: "Before 37 weeks, 4 or more in an hour is worth a call to your care team.", tone: .calm)
         }
         let firstSign = settings.plan.firstSign
         if !firstSign.isEmpty, [.earlyLike, .activeLike, .veryClose].contains(read.pattern) {
@@ -395,10 +395,9 @@ struct LaborAnalysis {
         if let less = recent.last(where: { $0.kind == .lessMovement }) {
             flags.append(Flag(id: "movement", text: "Baby moving less since \(Self.time(less.time)). Give your care team a call — they'd rather hear from you, even at night."))
         }
-        if let open, now.timeIntervalSince(open.start) > Self.longLength {
-            flags.append(Flag(id: "long", text: "This one is past 2 minutes. If they keep running this long, check in with your care team."))
-        } else if lastHour.lengths.contains(where: { $0 > Self.longLength }) {
-            flags.append(Flag(id: "long", text: "One lasted over 2 minutes. If that keeps happening, check in with your care team."))
+        let long = lastHour.lengths.filter { $0 > Self.longLength }.count
+        if long >= 2 {
+            flags.append(Flag(id: "long", text: "\(long) lasted over 2 minutes this hour. Worth checking in with your care team."))
         }
         let tenMinutes = stats(from: now.addingTimeInterval(-600), to: now).count
         if tenMinutes >= 6 {

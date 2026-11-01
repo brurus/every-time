@@ -1,27 +1,21 @@
 import Charts
 import SwiftUI
 
-/// A red note on top with a Call button; nothing dials unless tapped.
+/// A red note on top, with the number to call as plain text.
 struct FlagBanner: View {
     let flag: LaborAnalysis.Flag
     let phone: String
-    let call: () -> Void
-    let setNumber: () -> Void
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Theme.Tone.bad)
             VStack(alignment: .leading, spacing: 8) {
                 Text(flag.text).font(.subheadline).fixedSize(horizontal: false, vertical: true)
-                if phone.isEmpty {
-                    Button(flag.isEmergency ? "Add the emergency number" : "Add the hospital's number", action: setNumber).font(.subheadline)
-                } else {
-                    Button(action: call) {
-                        Label(flag.isEmergency ? "Call \(phone) now" : "Call now", systemImage: "phone.fill")
-                            .font(.subheadline.weight(.semibold))
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(Theme.Tone.bad)
+                if !phone.isEmpty {
+                    Text("\(flag.isEmergency ? "Emergency" : "Hospital"): \(phone)")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
                 }
             }
             Spacer(minLength: 0)
@@ -34,8 +28,6 @@ struct FlagBanner: View {
 struct AdviceView: View {
     let advice: LaborAnalysis.Advice
     let phone: String
-    let call: () -> Void
-    let setNumber: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -47,15 +39,11 @@ struct AdviceView: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            if advice.tone == .go {
-                if phone.isEmpty {
-                    Button("Add the hospital's number", action: setNumber).font(.subheadline).padding(.top, 4)
-                } else {
-                    Button("Call the hospital", action: call)
-                        .buttonStyle(.borderedProminent)
-                        .tint(Theme.Tone.good)
-                        .padding(.top, 4)
-                }
+            if advice.tone == .go, !phone.isEmpty {
+                Text("Hospital: \(phone)")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -90,8 +78,9 @@ struct GoalRow: View {
                         Text(condition.title).font(.footnote).foregroundStyle(.secondary)
                         HStack(spacing: 4) {
                             Text(condition.value).font(.clock(24, weight: .medium))
-                            Image(systemName: condition.isMet ? "checkmark.circle.fill" : "xmark.circle")
-                                .foregroundStyle(condition.isMet ? Theme.Tone.good : .secondary)
+                            if condition.isMet {
+                                Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.Tone.good)
+                            }
                         }
                         Text("goal \(condition.goal)").font(.caption).foregroundStyle(.secondary)
                     }
