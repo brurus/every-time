@@ -22,6 +22,18 @@ struct WorldTests {
         #expect(up.localIndex == 0)
     }
 
+    @Test func homeCityNamesDeviceZoneOnlyWhenTimesMatch() throws {
+        let device = try #require(TimeZone(identifier: "Europe/Paris"))
+        let date = try #require(ISO8601DateFormatter().date(from: "2027-01-15T12:00:00Z"))
+        let berlin = WorldCity(timeZoneIdentifier: "Europe/Berlin")
+
+        let named = WorldCity.local(home: berlin, device: device, at: date)
+        #expect(named.name == "Berlin")
+        #expect(named.timeZoneIdentifier == "Europe/Paris")
+        #expect(WorldCity.local(home: WorldCity(timeZoneIdentifier: "Asia/Tokyo"), device: device, at: date).name == "Paris")
+        #expect(WorldCity.local(home: nil, device: device, at: date).name == "Paris")
+    }
+
     @Test func migratesExcludedLocalIDOnce() throws {
         let suite = "EveryTimeTests.\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suite))

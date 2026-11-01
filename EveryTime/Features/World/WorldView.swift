@@ -17,13 +17,16 @@ struct WorldView: View {
     @Stored(TimelineRow.excludedKey) private var overlapExcluded: [String] = []
     /// Every city ever added, newest first.
     @Stored("world.recentCities") private var recent: [WorldCity] = []
+    @Stored(WorldCity.homeKey) private var home: WorldCity? = nil
+    @State private var pickingHome = false
+    @State private var homeMismatch: WorldCity?
 
     private static let daysBack = 7
     private static let daysAhead = 7
     private let hours = 24 * (Self.daysBack + 1 + Self.daysAhead)
 
     private var rows: [TimelineRow] {
-        TimelineRow.rows(cities: cities, local: .local, localIndex: localIndex)
+        TimelineRow.rows(cities: cities, local: .local(home: home, at: cursor), localIndex: localIndex)
     }
 
     var body: some View {
@@ -37,6 +40,7 @@ struct WorldView: View {
                                  onScroll: { if !followsNow { cursor = date(atOffset: $0) } },
                                  onDragStart: { followsNow = false },
                                  onRemove: remove,
+                                 onPickHome: { pickingHome = true },
                                  onMove: move)
                     if cities.isEmpty {
                         Text("Tap + to add a city to compare")
@@ -59,6 +63,14 @@ struct WorldView: View {
         .sheet(isPresented: $showingPicker) {
             CityPickerView(excluded: Set(cities.map(\.id) + [WorldCity.local.id])) { add($0) }
         }
+        .sheet(isPresented: $pickingHome, onDismiss: checkHome) {
+            CityPickerView(excluded: []) { home = $0 }
+        }
+        .alert("Your iPhone isn't on \(homeMismatch?.name ?? "") time", isPresented: .constant(homeMismatch != nil)) {
+            Button("OK") { homeMismatch = nil }
+        } message: {
+            Text("Home follows the phone's clock. It will say \(homeMismatch?.name ?? "") once the phone is set to that time zone in Settings > General > Date & Time.")
+        }
         .sensoryFeedback(.selection, trigger: target)
         .onAppear {
             TimelineRow.migrateLocalID()
@@ -67,6 +79,11 @@ struct WorldView: View {
         .onChange(of: OverlapInputs(cities: cities, localIndex: localIndex, target: target,
                                     excluded: overlapExcluded, start: start), initial: true) { refreshGridOverlaps() }
         .task { await tickWhileFollowingNow() }
+    }
+
+    private func checkHome() {
+        guard let home, WorldCity.local(home: home).name != home.name else { return }
+        homeMismatch = home
     }
 
     // MARK: Hero

@@ -48,6 +48,10 @@ struct TimelineRow: Identifiable {
     }
 }
 
+extension WorldCity {
+    static var local: WorldCity { local(home: AppData.defaults.decoded(homeKey)) }
+}
+
 /// Daylight 7 AM – 7 PM, evening otherwise.
 enum HourShade {
     case day, evening
@@ -83,6 +87,7 @@ struct TimelineGrid: View {
     let onScroll: (CGFloat) -> Void
     let onDragStart: () -> Void
     let onRemove: (WorldCity) -> Void
+    var onPickHome: () -> Void = {}
     let onMove: (_ id: String, _ targetID: String) -> Void
     @State private var dropTarget: String?
 
@@ -126,13 +131,13 @@ struct TimelineGrid: View {
     }
 
     private func label(_ row: TimelineRow) -> some View {
-        CursorLabel(row: row, cursor: cursor, isEditing: isEditing) { onRemove(row.city) }
+        CursorLabel(row: row, cursor: cursor, isEditing: isEditing, onRemove: { onRemove(row.city) }, onPickHome: onPickHome)
             .frame(height: Self.rowHeight)
             .background(dropTarget == row.id ? Color.accentColor.opacity(0.12) : .clear,
                         in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             .contentShape(Rectangle())
             .draggable(row.id) {
-                CursorLabel(row: row, cursor: cursor, isEditing: false) {}
+                CursorLabel(row: row, cursor: cursor, isEditing: false, onRemove: {}, onPickHome: {})
                     .frame(width: Self.labelWidth, height: Self.rowHeight)
             }
             .dropDestination(for: String.self) { ids, _ in
@@ -141,7 +146,9 @@ struct TimelineGrid: View {
                 return true
             } isTargeted: { dropTarget = $0 ? row.id : (dropTarget == row.id ? nil : dropTarget) }
             .contextMenu {
-                if !row.isLocal {
+                if row.isLocal {
+                    Button("Home city…", systemImage: "house", action: onPickHome)
+                } else {
                     Button("Remove", systemImage: "trash", role: .destructive) { onRemove(row.city) }
                 }
             }
@@ -216,11 +223,18 @@ private struct CursorLabel: View {
     let cursor: Date
     let isEditing: Bool
     let onRemove: () -> Void
+    let onPickHome: () -> Void
 
     var body: some View {
         let tz = row.calendar.timeZone
         HStack(spacing: 8) {
-            if isEditing && !row.isLocal {
+            if isEditing && row.isLocal {
+                Button("Home city", systemImage: "pencil.circle.fill", action: onPickHome)
+                    .labelStyle(.iconOnly)
+                    .foregroundStyle(.white, Color.accentColor)
+                    .font(.title3)
+                    .transition(.scale.combined(with: .opacity))
+            } else if isEditing {
                 Button("Remove \(row.city.name)", systemImage: "minus.circle.fill", role: .destructive, action: onRemove)
                     .labelStyle(.iconOnly)
                     .foregroundStyle(.white, Theme.Tone.bad)

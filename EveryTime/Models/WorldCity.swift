@@ -21,7 +21,15 @@ struct WorldCity: Codable, Identifiable, Hashable {
     static let storageKey = "world.cities"
     static let defaults = ["America/New_York", "Europe/London", "Asia/Singapore"].map(WorldCity.init)
 
-    static var local: WorldCity { WorldCity(timeZoneIdentifier: TimeZone.current.identifier) }
+    static let homeKey = "world.home"
+
+    /// The device's zone, named after `home` while both show the same time.
+    static func local(home: WorldCity?, device: TimeZone = .current, at date: Date = .now) -> WorldCity {
+        guard let home, home.timeZone.secondsFromGMT(for: date) == device.secondsFromGMT(for: date) else {
+            return WorldCity(timeZoneIdentifier: device.identifier)
+        }
+        return WorldCity(name: home.name, timeZoneIdentifier: device.identifier)
+    }
 
     /// Zone cities plus major cities that share another city's zone (Beijing → Asia/Shanghai).
     static let all: [WorldCity] = {
