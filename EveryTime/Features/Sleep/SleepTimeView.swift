@@ -95,7 +95,7 @@ struct SleepTimeView: View {
         let advice = NapAdvice(profile: profile)
         let nights = PastNight.merged(logged: naps, health: health)
         let plan = SleepPlan.resolve(now: now, kind: kind, napMinutes: napMinutes, pickedBed: storedBed, pickedWake: storedWake,
-                                     profile: profile, nights: nights)
+                                     profile: profile, nights: nights, naps: naps)
         let choice = plan.choice
         // Until Health has answered, a night it holds would look missing.
         let healthReady = !healthAsked || healthLoadedAt != nil
@@ -130,6 +130,8 @@ struct SleepTimeView: View {
         .bottomBar {
             Button {
                 if choice.isNow { NapSession.start(wake: choice.wake, resleep: choice.resleep) } else { NapSession.plan(bed: choice.bed, wake: choice.wake) }
+                // Picks are for this sleep; the next one starts from the usual hours again.
+                (storedBed, storedWake) = (nil, nil)
             } label: {
                 Label(choice.button, systemImage: choice.symbol)
                     .lineLimit(1)

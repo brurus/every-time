@@ -5,9 +5,10 @@ import Testing
 struct SleepPlanTests {
     init() { useDefaultCycle() }
 
-    private func plan(_ now: Date, kind: SleepKind = .sleep, bed: Date? = nil, wake: Date? = nil, nights: [PastNight] = []) -> SleepPlan {
+    private func plan(_ now: Date, kind: SleepKind = .sleep, bed: Date? = nil, wake: Date? = nil, nights: [PastNight] = [],
+                      naps: [Nap] = []) -> SleepPlan {
         SleepPlan.resolve(now: now, kind: kind, napMinutes: 20, pickedBed: bed, pickedWake: wake,
-                          profile: JetLagProfile(), nights: nights, calendar: gregorian())
+                          profile: JetLagProfile(), nights: nights, naps: naps, calendar: gregorian())
     }
 
     @Test func napStartsNowForItsLength() {
@@ -39,6 +40,25 @@ struct SleepPlanTests {
         let plan = plan(date(2026, 3, 11, 7, 30), nights: [night])
         #expect(plan.choice.resleep)
         #expect(plan.choice.bed == date(2026, 3, 11, 7, 30))
+    }
+
+    @Test func goingBackToSleepAgainKeepsTheNightGoing() {
+        let night = PastNight(start: date(2026, 3, 11, 0, 30), end: date(2026, 3, 11, 5, 20), asleep: 4.5 * 3600)
+        let naps = [Nap(start: date(2026, 3, 11, 5, 25), end: date(2026, 3, 11, 7, 10), resleep: true),
+                    Nap(start: date(2026, 3, 11, 7, 10), end: date(2026, 3, 11, 8, 20), resleep: true)]
+        let now = date(2026, 3, 11, 8, 20)
+        #expect(plan(now, nights: [night], naps: naps).choice.resleep)
+        #expect(plan(now, nights: [night], naps: naps).choice.bed == now)
+        #expect(!plan(now, nights: [night]).choice.resleep)
+    }
+
+    @Test func byDayNowPickNeverRunsPastTheRingsLongest() {
+        let now = date(2026, 3, 11, 8, 20)
+        let far = plan(now, bed: now, wake: date(2026, 3, 12, 7, 20))
+        #expect(far.choice.bed == date(2026, 3, 11, 23))
+        let near = plan(now, bed: now, wake: date(2026, 3, 11, 16, 20))
+        #expect(near.choice.bed == now && near.choice.wake == date(2026, 3, 11, 16, 20))
+        #expect(plan(now, bed: date(2026, 3, 11, 9), wake: date(2026, 3, 12, 7)).choice.length <= Double(SleepRing.lengths.upperBound) * 60)
     }
 
     @Test func pastPickedBedMeansNowWhileItsWakeIsAhead() {
