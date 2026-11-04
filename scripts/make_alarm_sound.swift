@@ -1,26 +1,34 @@
 // Renders the nap alarm (29 s, under the 30 s notification-sound limit) as IMA4 in a CAF, a quarter of PCM size.
+// A soft, low chime that swells from a whisper (-36 dB) to full over 24 s, then holds; the system alarm
+// can't ramp its own volume, so the swell lives in the file.
 // Run: swift scripts/make_alarm_sound.swift
 import Foundation
 
 let rate = 22_050
 let seconds = 29.0
-let notes = [1046.5, 1318.5, 1568.0, 2093.0]
-let noteGap = 0.16, phrase = 1.5
+let swell = 24.0
+let notes = [523.3, 659.3, 784.0, 880.0, 784.0, 659.3]
+let noteGap = 0.32, phrase = 2.4
+
+func loudness(_ t: Double) -> Double { pow(10, -36 * max(0, 1 - t / swell) / 20) }
 
 var samples = [Double](repeating: 0, count: Int(seconds * Double(rate)))
 var start = 0.0
 while start < seconds - 1 {
-    let loudness = min(1, 0.35 + start / 12 * 0.65)
     for (i, freq) in notes.enumerated() {
         let onset = start + Double(i) * noteGap
-        for n in Int(onset * Double(rate))..<min(samples.count, Int((onset + 0.9) * Double(rate))) {
+        // A brighter overtone joins as it gets loud, so the full alarm still cuts through.
+        let bright = max(0, min(1, (onset - swell / 2) / (swell / 2)))
+        for n in Int(onset * Double(rate))..<min(samples.count, Int((onset + 1.4) * Double(rate))) {
             let t = Double(n) / Double(rate) - onset
-            let tone = sin(2 * .pi * freq * t) + 0.25 * sin(2 * .pi * freq * 4 * t) * exp(-t * 20)
-            samples[n] += loudness * 0.3 * tone * exp(-t * 5) * min(1, t * 400)
+            let tone = sin(2 * .pi * freq * t) + 0.3 * sin(4 * .pi * freq * t) + 0.2 * bright * sin(6 * .pi * freq * t)
+            samples[n] += loudness(onset) * 0.32 * tone * exp(-t * 3) * min(1, t * 60)
         }
     }
     start += phrase
 }
+let peak = samples.map(abs).max() ?? 1
+samples = samples.map { $0 * 0.9 / peak }
 
 var data = Data()
 func append<T: FixedWidthInteger>(_ value: T) { withUnsafeBytes(of: value.littleEndian) { data.append(contentsOf: $0) } }

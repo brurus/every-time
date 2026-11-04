@@ -345,19 +345,22 @@ final class NapRinger {
 
     /// Woken long after the alarm (the app was suspended): too late to start ringing now.
     private static let lateRing: TimeInterval = 5 * 60
+    private static let quietStart: TimeInterval = 20
 
     private func ring(due: Date) {
         guard Date.now.timeIntervalSince(due) < Self.lateRing else { return stop() }
         guard let player else { return }
         Self.audio.async { Self.activateSession(mixing: false) }
         player.currentTime = 0
-        player.volume = 0.3
+        player.volume = 1
         player.play()
-        player.setVolume(1, fadeDuration: 20)
         isRinging = true
-        buzz = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { _ in
+        // The sound swells on its own; buzzing joins once it's loud.
+        let buzz = Timer(fire: .now.addingTimeInterval(Self.quietStart), interval: 2, repeats: true) { _ in
             AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
         }
+        RunLoop.main.add(buzz, forMode: .common)
+        self.buzz = buzz
         NapAlarm.ringerStarted()
         after(Self.maxRing) { $0.stop() }
     }
