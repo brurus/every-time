@@ -30,7 +30,10 @@ struct JetLagProfileSheet: View {
                 }
                 .listRowBackground(Theme.cardFill)
 
-                if !showsAdvice { cycleSection }
+                if !showsAdvice {
+                    cycleSection
+                    napSection
+                }
 
                 Section {
                     ForEach(Chronotype.allCases) { type in
@@ -126,6 +129,33 @@ struct JetLagProfileSheet: View {
                     from person to person. Every time you wake before the alarm, the app notes how long \
                     you slept; after three such wakes it picks the length that puts them on cycle ends. \
                     An Apple Watch's REM stages are used until then. Or set it yourself.
+                    """)
+            }
+        }
+        .listRowBackground(Theme.cardFill)
+    }
+
+    private var napSection: some View {
+        Section {
+            Toggle(isOn: Binding(get: { profile.dailyNap != nil },
+                                 set: { profile.dailyNap = $0 ? NapAdvice.suggestedMinutes : nil })) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("I nap every day")
+                    Text("Counts in sleep debt, marks missed naps, reminds you when the nap window opens")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            if let minutes = profile.dailyNap {
+                Picker("Nap length", selection: Binding(get: { minutes }, set: { profile.dailyNap = $0 })) {
+                    ForEach(NapAdvice.lengths, id: \.self) { Text("\($0) min").tag($0) }
+                }
+            }
+        } header: {
+            SectionLabel(title: "Daily nap") {
+                InfoButton(label: "About a daily nap", text: """
+                    Alertness dips after lunch, and people who nap daily feel it most when they skip one. \
+                    On: your nap's time asleep joins each day's sleep need, so a skipped nap adds a little debt \
+                    and a taken one pays it back. Days with no nap show in history.
                     """)
             }
         }

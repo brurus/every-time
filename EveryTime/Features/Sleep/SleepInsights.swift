@@ -10,11 +10,11 @@ struct SleepInsights: View {
 
     var body: some View {
         let need = SleepTrend.need(profile)
-        let debt = SleepTrend.debt(nights, naps: naps, need: need)
+        let debt = SleepTrend.debt(nights, naps: naps, need: need, napNeed: SleepTrend.napNeed(profile))
         let rated = EnergyChart.rated(naps)
         let energy = EnergyChart.mean(rated)
         let streak = SleepTrend.wakeStreak(nights, usualWake: profile.usualWake)
-        let perNight = NapAdvice.hours(need / 3600)
+        let perNight = NapAdvice.hours(need / 3600) + (profile.dailyNap.map { " + \($0)-min nap" } ?? "")
         VStack(alignment: .leading, spacing: 10) {
             SectionLabel("Insights")
             VStack(alignment: .leading, spacing: 14) {
@@ -29,7 +29,7 @@ struct SleepInsights: View {
                         tint: debt >= 3 * 3600 ? Theme.Tone.bad : debt >= 3600 ? Theme.Tone.warn : Theme.Tone.good,
                         detail: debt < 15 * 60 ? "On track for \(perNight)/night over the last 7 days"
                             : "Short of \(perNight)/night over the last 7 days, naps count",
-                        info: Self.debtInfo(streak: streak))
+                        info: Self.debtInfo(streak: streak, dailyNap: profile.dailyNap))
                 }
                 if let energy {
                     row("bolt.fill", "Energy",
@@ -77,9 +77,10 @@ struct SleepInsights: View {
         Low? Try waking at a cycle's end or a shorter nap. The Energy trend shows which sleeps worked.
         """
 
-    private static func debtInfo(streak: Int) -> String {
+    private static func debtInfo(streak: Int, dailyNap: Int?) -> String {
         """
-        Sleep you missed over the last 7 days, by the day you woke, against your usual hours (at least the recommended 7 h asleep). \
+        Sleep you missed over the last 7 days, by the day you woke, against your usual hours (at least the recommended 7 h asleep)\
+        \(dailyNap.map { " plus your daily \($0)-min nap" } ?? ""). \
         Naps in that time pay it back by the time actually asleep. Under 1 h is fine; 3 h+ is worth catching up.
         Pay it back with an earlier bedtime or an early-afternoon nap, not a long lie-in — waking at a steady time helps most \
         (\(streak) \(streak == 1 ? "day" : "days") in a row so far).

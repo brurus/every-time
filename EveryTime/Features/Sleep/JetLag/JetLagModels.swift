@@ -20,6 +20,8 @@ struct JetLagProfile: Codable, Equatable {
     var melatonin = false
     var caffeine = true
     var notifications = true
+    /// Minutes of the nap you take every day; nil if you don't.
+    var dailyNap: Int?
 
     var sleepHours: Double {
         Double((usualWake - usualBedtime + 24 * 60) % (24 * 60)) / 60

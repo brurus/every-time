@@ -52,7 +52,7 @@ struct SleepTimeView: View {
             .sheet(item: $sheet) { _ in
                 JetLagProfileSheet(profile: storedProfile ?? JetLagProfile(), showsAdvice: false) {
                     storedProfile = $0
-                    NotificationBudget.refresh()
+                    NotificationBudget.refresh(requestingAuthorization: $0.dailyNap != nil)
                 }
             }
             .sheet(item: $logDraft) { draft in

@@ -18,14 +18,22 @@ struct SleepHistory: View {
     enum HealthState { case unavailable, notAsked, loading, empty, loaded }
 
     private enum Entry: Identifiable {
-        case night(PastNight), nap(Nap)
-        var id: String { switch self { case .night(let n): "n\(n.id.timeIntervalSinceReferenceDate)"; case .nap(let n): n.id.uuidString } }
-        var start: Date { switch self { case .night(let n): n.start; case .nap(let n): n.start } }
+        case night(PastNight), nap(Nap), missed(DateInterval)
+        var id: String {
+            switch self {
+            case .night(let n): "n\(n.id.timeIntervalSinceReferenceDate)"
+            case .nap(let n): n.id.uuidString
+            case .missed(let w): "m\(w.start.timeIntervalSinceReferenceDate)"
+            }
+        }
+        var start: Date { switch self { case .night(let n): n.start; case .nap(let n): n.start; case .missed(let w): w.start } }
     }
 
     var body: some View {
         let byID = Dictionary(naps.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
-        let entries = (nights.map(Entry.night) + naps.filter { !$0.isNight }.map(Entry.nap)).sorted { $0.start > $1.start }
+        let missed = SleepTrend.missedNaps(nights, naps: naps, advice: advice, now: now)
+        let entries = (nights.map(Entry.night) + naps.filter { !$0.isNight }.map(Entry.nap) + missed.map(Entry.missed))
+            .sorted { $0.start > $1.start }
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 SectionLabel(title: "History") { InfoButton(label: "About history", text: Self.info) }
@@ -54,6 +62,8 @@ struct SleepHistory: View {
                     }
                 case .nap(let nap):
                     editable(NapRow(nap: nap, level: advice.tonight(start: nap.start, minutes: nap.minutes)), nap)
+                case .missed(let window):
+                    MissedNapRow(window: window)
                 }
             }
             if entries.count > 5 {
@@ -88,5 +98,17 @@ struct SleepHistory: View {
         Nights and naps slept from here or logged, plus the Health app's nights on days with nothing logged. \
         A sleep under 3 h is a nap. Each logged night counts; from Health, the longest sleep that day. \
         Score 0–100: up to 60 for sleep against what you need, 20 for waking between cycles, 20 for how rested you felt.
+        With a daily nap on, a day whose nap window passed without one shows as a missed nap.
         """
+}
+
+struct MissedNapRow: View {
+    let window: DateInterval
+
+    var body: some View {
+        SleepHistoryRow(date: window.start, detail: "No nap \(SleepNow.clock(window.start)) – \(SleepNow.clock(window.end))",
+                        duration: "Missed") {
+            Image(systemName: "powersleep").font(.title3).frame(width: 30, height: 22).foregroundStyle(Theme.Tone.warn)
+        }
+    }
 }

@@ -7,12 +7,13 @@ enum NotificationBudget {
     nonisolated static let systemCap = 64
 
     enum Feature: CaseIterable {
-        case nap, windDown, timer, activity, countdown, event, lunar, jetLag
+        case nap, windDown, napReminder, timer, activity, countdown, event, lunar, jetLag
 
         var prefix: String {
             switch self {
             case .nap: "nap."
             case .windDown: "sleep.winddown"
+            case .napReminder: "sleep.napreminder."
             case .timer: "timer."
             case .activity: "activity."
             case .countdown: "countdown."
@@ -37,7 +38,7 @@ enum NotificationBudget {
             switch self {
             case .activity, .jetLag: 8
             case .countdown, .event: 4
-            case .lunar: 2
+            case .lunar, .napReminder: 2
             default: 0
             }
         }
@@ -132,6 +133,7 @@ enum NotificationBudget {
     private static func wanted(now: Date) -> [Request] {
         TimerStore.wanted(now: now)
             + WindDown.wanted(now: now)
+            + NapReminder.wanted(now: now)
             + ActivityAlarms.wanted(now: now)
             + CountdownNotifications.wanted(now: now)
             + ImportantEventNotifications.wanted(now: now)

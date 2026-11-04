@@ -179,9 +179,14 @@ enum SleepTrend {
         max(profile.sleepHours * 3600 - SleepSuggestion.fallAsleepTime, (profile.age < 18 ? 8 : 7) * 3600)
     }
 
+    /// Asleep time a daily nap adds to each day's need, counted the way a nap pays debt back.
+    static func napNeed(_ profile: JetLagProfile) -> TimeInterval {
+        profile.dailyNap.map { max(0, Double($0) * 60 - SleepSuggestion.fallAsleepTime) } ?? 0
+    }
+
     /// Shortfall per wake day over the last `days` days; a second long sleep that day, long nights and naps
     /// pay it back by the time spent asleep.
-    static func debt(_ nights: [PastNight], naps: [Nap] = [], need: TimeInterval, days: Int = 7,
+    static func debt(_ nights: [PastNight], naps: [Nap] = [], need: TimeInterval, napNeed: TimeInterval = 0, days: Int = 7,
                      now: Date = .now, calendar: Calendar = .current) -> TimeInterval {
         guard let from = calendar.date(byAdding: .day, value: 1 - days, to: calendar.startOfDay(for: now)) else { return 0 }
         let recent = nights.filter { $0.end >= from }
@@ -190,7 +195,18 @@ enum SleepTrend {
             .map { $0.reduce(0) { $0 + $1.asleep } }
         let napped = naps.filter { !$0.isNight && $0.start >= since }
             .reduce(0) { $0 + max(0, $1.duration - SleepSuggestion.fallAsleepTime) }
-        return max(0, byDay.reduce(0) { $0 + need - $1 } - napped)
+        return max(0, byDay.reduce(0) { $0 + need + napNeed - $1 } - napped)
+    }
+
+    /// Nap windows, newest first, that passed with no nap on a day with a night; only for a daily napper.
+    static func missedNaps(_ nights: [PastNight], naps: [Nap], advice: NapAdvice, now: Date) -> [DateInterval] {
+        guard advice.profile.dailyNap != nil else { return [] }
+        let calendar = advice.calendar
+        let napped = Set(naps.filter { !$0.isNight && !$0.isResleep(among: naps) }.map { calendar.startOfDay(for: $0.start) })
+        return Set(nights.map { calendar.startOfDay(for: $0.end) }).subtracting(napped)
+            .map { advice.window(on: $0) }
+            .filter { $0.end <= now }
+            .sorted { $0.start > $1.start }
     }
 
     /// Days in a row, newest first, whose night ended within `slack` of the usual wake; a day with no night breaks it.

@@ -33,6 +33,40 @@ struct SleepTrendTests {
         #expect(SleepTrend.debt(nights, naps: [before], need: 8 * 3600, now: now, calendar: gregorian()) == 2 * 3600)
     }
 
+    @Test func dailyNapJoinsTheNeed() {
+        var profile = JetLagProfile()
+        #expect(SleepTrend.napNeed(profile) == 0)
+        profile.dailyNap = 30
+        let napNeed = SleepTrend.napNeed(profile)
+        #expect(napNeed == 30 * 60 - SleepSuggestion.fallAsleepTime)
+        let nights = [night(12, wake: 420, hours: 8), night(11, wake: 420, hours: 8)]
+        #expect(SleepTrend.debt(nights, need: 8 * 3600, napNeed: napNeed, now: now, calendar: gregorian()) == 2 * napNeed)
+        let nap = Nap(start: date(2026, 3, 12, 14), end: date(2026, 3, 12, 14, 30))
+        #expect(SleepTrend.debt(nights, naps: [nap], need: 8 * 3600, napNeed: napNeed, now: now, calendar: gregorian()) == napNeed)
+    }
+
+    @Test func missedNapsOnlyForPassedWindowsOfDailyNappers() {
+        var advice = napAdvice()
+        let nights = [night(12, wake: 420, hours: 8), night(11, wake: 420, hours: 8), night(10, wake: 420, hours: 8)]
+        let nap = Nap(start: date(2026, 3, 11, 14), end: date(2026, 3, 11, 14, 20))
+        #expect(SleepTrend.missedNaps(nights, naps: [nap], advice: advice, now: now).isEmpty)
+        advice.profile.dailyNap = 20
+        let missed = SleepTrend.missedNaps(nights, naps: [nap], advice: advice, now: now)
+        #expect(missed.map(\.start) == [date(2026, 3, 12, 13), date(2026, 3, 10, 13)])
+        #expect(SleepTrend.missedNaps(nights, naps: [nap], advice: advice, now: date(2026, 3, 12, 14)).count == 1)
+    }
+
+    @Test func napReminderSkipsNappedAndPastWindows() {
+        var advice = napAdvice()
+        #expect(NapReminder.requests(advice: advice, naps: [], now: date(2026, 3, 12, 9)).isEmpty)
+        advice.profile.dailyNap = 20
+        #expect(NapReminder.requests(advice: advice, naps: [], now: date(2026, 3, 12, 9)).map(\.fire)
+                == [date(2026, 3, 12, 13), date(2026, 3, 13, 13)])
+        let napped = Nap(start: date(2026, 3, 12, 8), end: date(2026, 3, 12, 8, 20))
+        #expect(NapReminder.requests(advice: advice, naps: [napped], now: date(2026, 3, 12, 9)).map(\.fire) == [date(2026, 3, 13, 13)])
+        #expect(NapReminder.requests(advice: advice, naps: [], now: date(2026, 3, 12, 14)).map(\.fire) == [date(2026, 3, 13, 13)])
+    }
+
     @Test func goingBackToSleepIsItsOwnNap() {
         let logged = [
             Nap(start: date(2026, 3, 11, 23), end: date(2026, 3, 12, 6)),
